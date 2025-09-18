@@ -128,59 +128,189 @@ TDoF20\
   ```
 
 ---
-Distribution summary
-A) single_data — per-class counts
-Class	train_data_list	visual_data	test_data_list	hard_train_data_list	hard_test_data_list	Total
-cube_136	1310	11	232	1542		1542
-cube_166	1349	12	239	1588		1588
-cube_216	1314	12	233	1547		1547
-cuboid_210	1353	12	239	1592		1592
-cuboid_330	1306	11	231	1537		1537
-goblet_180	1360	12	240	1600		1600
-handle_cup_280	1357	12	240	1597		1597
-handle_cup_440	1360	12	240	1600		1600
-handle_cup_480	1360	12	240	1600		1600
-icecream_cup_175	1287	12	228	1515		1515
-juice_cup_250	1352	12	239	1591		1591
-juice_cup_340	1357	12	240	1597		1597
-juice_cup_350	1360	12	240	1600		1600
-quartet_cup_80	1325	11	234	1559		1559
-quartet_cup_90	1327	12	235	1562		1562
-short_cup_220	1360	12	240	1600		1600
-water_cup_270	1049	9	186	1235		1235
-water_cup_300	1300	12	230	1530		1530
-whisky_cup_225	1360	12	240	1600		1600
-whisky_cup_270	1288	11	228	1516		1516
+###############################################################
+Got it — here’s a clean, **English README-style** dataset intro.
+(I’ve renamed “Top level & configuration” → **“Root-level metadata & splits”**, and made **`models/`, `diameters/`, `farthest/`, `single_data/`, `multi_data/`, `single_data_bp/`** all follow the **same “Role / Contents / Notes”** structure. I’ve also removed the hard “3–5” claim from the main text; see the note under `multi_data/`.)
 
-Column totals (single_data):
-train_data_list = 26,434 · visual_data = 233 · test_data_list = 4,674 · hard_train_data_list = 52,747
+# TDoF20 — Directory & File Reference
 
-B) multi_data — per-sequence counts
-Seq ID	train_data_list	visual_data	test_data_list	hard_train_data_list	hard_test_data_list	Total
-00				1,584		1,584
-01				1,600		1,600
-02					1,600	1,600
-03				1,542		1,542
-04				1,298		1,298
-05				1,576		1,576
-06				1,591		1,591
-07				1,600		1,600
-08					1,544	1,544
-09					1,356	1,356
-10					1,524	1,524
-11					1,583	1,583
-12				1,597		1,597
-13				1,538		1,538
-14				1,517		1,517
-15					1,532	1,532
-16				1,596		1,596
-17				1,600		1,600
-18				1,584		1,584
-19				1,416		1,416
+> **Modalities (terminology)**
+>
+> * **`broken_depth/`** — raw 16-bit depth with holes/wrong depths (0 = invalid).
+> * **`depth/`** — stabilized/hole-filled depth aligned to the same frame.
+> * **`mask/`** — integer semantic mask (pixel value = class ID; 0 = background).
+> * **`pose/`** — per-frame 6DoF ground truth & metadata (`*.pkl`).
 
-Column totals (multi_data):
-hard_train_data_list = 52,747 · hard_test_data_list = 9,139
-(These match your provided sums; other columns are not used for multi_data.)
+## Tree (concise)
+
+```
+TDoF20\
+├── dataset_config/
+│   ├── classes.txt
+│   ├── intrinsics.json
+│   └── {train,test,hard_train,hard_test,visual}_data_list.txt
+├── models/
+├── diameters/
+├── farthest/
+├── single_data/
+│   ├── <object>/{rgb,depth,broken_depth,mask,labels,pose}/
+│   └── …
+├── multi_data/
+│   ├── 00/{rgb,depth,broken_depth,mask,labels,pose}/
+│   └── 01–19/{…}
+└── single_data_bp/
+    ├── <object>/{rgb,depth,broken_depth,mask,pose}/
+    └── {intrinsics.json, *.ply, diameter.txt, farthest.txt, train.txt, test.txt, train.json, test.json, …}
+```
+
+---
+
+## Root-level metadata & splits — `dataset_config/`
+
+* **Role**: global metadata and split indices.
+* **Contents**:
+
+  * `classes.txt` — ordered class list (defines class IDs used in masks/poses).
+  * `intrinsics.json` — camera intrinsics (incl. `depth_scale`).
+  * `train_data_list.txt`, `test_data_list.txt` — **single\_data** splits (complementary).
+  * `hard_train_data_list.txt`, `hard_test_data_list.txt` — “hard” setting: all **single\_data** + most **multi\_data** for train; the six hard **multi\_data** sequences `{02,08,09,10,11,15}` for test.
+  * `visual_data.txt` — small visualization subset (sampled from the regular test list).
+* **Notes**: every line indexes a frame stem; all modalities for that stem exist in the corresponding subfolders.
+
+## CAD meshes — `models/`
+
+* **Role**: per-class meshes for projection/alignment/evaluation.
+* **Contents**: one `*.ply` per class.
+* **Notes**: mesh scale matches the provided diameters.
+
+## Object diameters — `diameters/`
+
+* **Role**: per-class scale values (used e.g. in ADD/ADD-S normalization).
+* **Contents**: one text file per class (`*_diameter.txt`).
+* **Notes**: single scalar per class.
+
+## Farthest keypoints — `farthest/`
+
+* **Role**: per-class 3D keypoints for training.
+* **Contents**: one text file per class (`*_farthest.txt`) with **8 FPS keypoints**.
+* **Notes**: used together with the object **center** to form **9 total 3D keypoints**.
+
+## Single-object scenes — `single_data/`
+
+* **Role**: per-class captures; one transparent object per frame.
+* **Contents**:
+
+  * `rgb/` — color images (`*.jpg`)
+  * `broken_depth/` — raw depth (`*.png`, 16-bit; holes/wrong depths; 0 = invalid)
+  * `depth/` — stabilized/hole-filled depth (`*.png`)
+  * `mask/` — integer labels image (`*.png`, pixel = class ID; 0 = background)
+  * `labels/` — auxiliary per-frame text (lightweight meta)
+  * `pose/` — per-frame GT (`*.pkl`, e.g., `poses`, `cls_ids`, `center_3ds`)
+* **Notes**: all folders share the same frame stem; other 19 classes follow the same layout.
+
+## Multi-object scenes — `multi_data/`
+
+* **Role**: scene sequences (`00–19`) containing **multiple** transparent objects per frame.
+* **Contents** (per sequence):
+
+  * `rgb/`, `broken_depth/`, `depth/`, `mask/`, `labels/`, `pose/` — same semantics as in `single_data/`.
+* **Notes**:
+
+  * Masks may include **several class IDs** per frame.
+  * The commonly used “hard” test subset is `{02,08,09,10,11,15}` (as defined in `dataset_config`).
+  * Your original data-collection note mentions “3–5 objects at a time”; actual counts can vary by frame/sequence.
+
+## Benchmark packs (uniform, self-contained) — `single_data_bp/`
+
+* **Role**: standardized per-class packs for fair comparison and easy reproduction.
+* **Contents**:
+
+  * Per class: `rgb/`, `broken_depth/`, `depth/`, `mask/`, `pose/`
+  * Per class meta: `{intrinsics.json, *.ply, diameter.txt, farthest.txt, train.txt, test.txt}`
+  * Dataset-level COCO exports: `{train.json, test.json, …}` (if provided)
+* **Notes**:
+
+  * **Unified frame count**: each class has **2,400 frames by construction** (resampled/standardized; not the raw `single_data/` count).
+  * COCO exports default to **`depth/`** for depth paths.
+
+---
+
+
+## Distribution summary
+
+## Regular split (single\_data only)
+
+| Class              | train\_data\_list | visual\_data | test\_data\_list |      Total |
+| ------------------ | ----------------: | -----------: | ---------------: | ---------: |
+| cube\_136          |              1310 |           11 |              232 |       1542 |
+| cube\_166          |              1349 |           12 |              239 |       1588 |
+| cube\_216          |              1314 |           12 |              233 |       1547 |
+| cuboid\_210        |              1353 |           12 |              239 |       1592 |
+| cuboid\_330        |              1306 |           11 |              231 |       1537 |
+| goblet\_180        |              1360 |           12 |              240 |       1600 |
+| handle\_cup\_280   |              1357 |           12 |              240 |       1597 |
+| handle\_cup\_440   |              1360 |           12 |              240 |       1600 |
+| handle\_cup\_480   |              1360 |           12 |              240 |       1600 |
+| icecream\_cup\_175 |              1287 |           12 |              228 |       1515 |
+| juice\_cup\_250    |              1352 |           12 |              239 |       1591 |
+| juice\_cup\_340    |              1357 |           12 |              240 |       1597 |
+| juice\_cup\_350    |              1360 |           12 |              240 |       1600 |
+| quartet\_cup\_80   |              1325 |           11 |              234 |       1559 |
+| quartet\_cup\_90   |              1327 |           12 |              235 |       1562 |
+| short\_cup\_220    |              1360 |           12 |              240 |       1600 |
+| water\_cup\_270    |              1049 |            9 |              186 |       1235 |
+| water\_cup\_300    |              1300 |           12 |              230 |       1530 |
+| whisky\_cup\_225   |              1360 |           12 |              240 |       1600 |
+| whisky\_cup\_270   |              1288 |           11 |              228 |       1516 |
+| **Total**          |        **26,434** |      **233** |        **4,674** | **31,108** |
+
+---
+
+## Hard split (single\_data + multi\_data)
+
+| ID                 |  Type  | hard\_train\_data\_list | hard\_test\_data\_list |      Total |
+| ------------------ | :----: | ----------------------: | ---------------------: | ---------: |
+| cube\_136          | single |                    1542 |                      — |       1542 |
+| cube\_166          | single |                    1588 |                      — |       1588 |
+| cube\_216          | single |                    1547 |                      — |       1547 |
+| cuboid\_210        | single |                    1592 |                      — |       1592 |
+| cuboid\_330        | single |                    1537 |                      — |       1537 |
+| goblet\_180        | single |                    1600 |                      — |       1600 |
+| handle\_cup\_280   | single |                    1597 |                      — |       1597 |
+| handle\_cup\_440   | single |                    1600 |                      — |       1600 |
+| handle\_cup\_480   | single |                    1600 |                      — |       1600 |
+| icecream\_cup\_175 | single |                    1515 |                      — |       1515 |
+| juice\_cup\_250    | single |                    1591 |                      — |       1591 |
+| juice\_cup\_340    | single |                    1597 |                      — |       1597 |
+| juice\_cup\_350    | single |                    1600 |                      — |       1600 |
+| quartet\_cup\_80   | single |                    1559 |                      — |       1559 |
+| quartet\_cup\_90   | single |                    1562 |                      — |       1562 |
+| short\_cup\_220    | single |                    1600 |                      — |       1600 |
+| water\_cup\_270    | single |                    1235 |                      — |       1235 |
+| water\_cup\_300    | single |                    1530 |                      — |       1530 |
+| whisky\_cup\_225   | single |                    1600 |                      — |       1600 |
+| whisky\_cup\_270   | single |                    1516 |                      — |       1516 |
+| 00                 |  multi |                    1584 |                      — |       1584 |
+| 01                 |  multi |                    1600 |                      — |       1600 |
+| 02                 |  multi |                       — |                   1600 |       1600 |
+| 03                 |  multi |                    1542 |                      — |       1542 |
+| 04                 |  multi |                    1298 |                      — |       1298 |
+| 05                 |  multi |                    1576 |                      — |       1576 |
+| 06                 |  multi |                    1591 |                      — |       1591 |
+| 07                 |  multi |                    1600 |                      — |       1600 |
+| 08                 |  multi |                       — |                   1544 |       1544 |
+| 09                 |  multi |                       — |                   1356 |       1356 |
+| 10                 |  multi |                       — |                   1524 |       1524 |
+| 11                 |  multi |                       — |                   1583 |       1583 |
+| 12                 |  multi |                    1597 |                      — |       1597 |
+| 13                 |  multi |                    1538 |                      — |       1538 |
+| 14                 |  multi |                    1517 |                      — |       1517 |
+| 15                 |  multi |                       — |                   1532 |       1532 |
+| 16                 |  multi |                    1596 |                      — |       1596 |
+| 17                 |  multi |                    1600 |                      — |       1600 |
+| 18                 |  multi |                    1584 |                      — |       1584 |
+| 19                 |  multi |                    1416 |                      — |       1416 |
+| **Total**          |        |              **52,747** |              **9,139** | **61,886** |
 
 
 
