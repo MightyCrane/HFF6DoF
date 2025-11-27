@@ -1,7 +1,7 @@
 # HFF6DoF — Official Implementation (Code Coming Soon)
 
 This is the **official repository** for the paper **"6DoF Pose Estimation of Transparent Objects: Dataset and Method"**.  
-**Code coming soon.**  
+**Code link: https://pan.baidu.com/s/18P54omUkwel9j3hdOuZ0PQ?pwd=i8kr**  
 **Dataset coming soon.** 
 ---
 
