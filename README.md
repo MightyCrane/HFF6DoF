@@ -2,7 +2,7 @@
 
 This is the **official repository** for the paper **"6DoF Pose Estimation of Transparent Objects: Dataset and Method"**.  
 **Dataset link: https://pan.baidu.com/s/18P54omUkwel9j3hdOuZ0PQ?pwd=i8kr**  
-
+**Paper link: https://www.mdpi.com/1424-8220/26/3/898**
 ---
 
 # TDoF20 Dataset — Directory & File Reference (English)
@@ -316,6 +316,18 @@ TDoF20\
 
 
 ---
-If you use our dataset or code, please consider citing the paper **"6DoF Pose Estimation of Transparent Objects: Dataset and Method"**.
-
-
+If you use our dataset, please consider citing the paper **"6DoF Pose Estimation of Transparent Objects: Dataset and Method"**.
+```
+@Article{s26030898,
+    AUTHOR = {Wang, Yunhe and Wu, Ting and Zou, Qin},
+    TITLE = {6DoF Pose Estimation of Transparent Objects: Dataset and Method},
+    JOURNAL = {Sensors},
+    VOLUME = {26},
+    YEAR = {2026},
+    NUMBER = {3},
+    ARTICLE-NUMBER = {898},
+    URL = {https://www.mdpi.com/1424-8220/26/3/898},
+    ISSN = {1424-8220},
+    DOI = {10.3390/s26030898}
+}
+```
